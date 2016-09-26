@@ -49,28 +49,39 @@ pmf = integrate.cumtrapz(values, bins_points, initial=0)
 #plt.plot(bins_points,pmf)
 leftcornerbot =[-122.836,38.78-0.0001]
 rightcornerup = [-122.732,38.84+0.0001]
+#sta_triplet = ['ACR','SB4','AL4']
+sta_triplet = ['ACR','SB4','JKR']
 
 subset_stations = allStations.ix[
                                 (allStations['LAT']>leftcornerbot[1]) & (allStations['LAT']<rightcornerup[1]) &
                                 (allStations['LON']>leftcornerbot[0]) & (allStations['LON']<rightcornerup[0]) &
-                                (allStations['Network_Code'].isin(['NC','BG']))
+                                (allStations['Station_Code'].isin(sta_triplet))
                                 ]
 subset_stations.index = range(subset_stations.shape[0])
-counts = np.zeros(subset_stations.shape[0])
+allQuakes.index = range(allQuakes.shape[0])
+
+counts = np.zeros((allQuakes.shape[0],len(sta_triplet)))
+
 for indSta,rowSta in subset_stations.iterrows():
-    count=0
     print 'Counting events on %s.%s' % (rowSta['Network_Code'],rowSta['Station_Code'])
     for index, row in allQuakes.iterrows():
+        count=0
+    
         ideq = row['ID']
         #NCst = obspy.read('./events/NCevent_%d.mseed' % ideq).select(station = rowSta)
         BGst = obspy.read('./events/BGevent_%d.mseed' % ideq).select(station=rowSta['Station_Code']).count()
         count+=BGst
         #print '%3.2f' % (1.0*index/(allQuakes.shape[0]))
-    counts[indSta] = count
-    
-subset_stations['NEvents'] = counts
-subset_stations.to_csv('./subsetStations.csv')
-    
+        counts[index,indSta] = count
+counts = counts.astype('bool')
+
+allQuakes['inSTA1'] = counts[:,0]
+allQuakes['inSTA2'] = counts[:,1]
+allQuakes['inSTA3'] = counts[:,2]
+allQuakes = allQuakes.ix[allQuakes['inSTA1'] & allQuakes['inSTA2'] & allQuakes['inSTA3']]
+#subset_stations['NEvents'] = counts
+#subset_stations.to_csv('./subsetStationsAL4ACRFUM.csv')
+allQuakes.to_csv('./quakesOn3Sta.csv')
 #QMLst = obspy.read('./events/QML_event_%d.mseed' % ideq)
     
     
