@@ -113,3 +113,21 @@ def DrawMapEvents(allQuakes,allStations ,
         plt.annotate(label,xy = (x,y), bbox = dict(boxstyle = 'round,pad=0.5', fc = 'yellow', alpha = 0.5),zorder=11)
         
     return fig,m
+    
+def ndToDataframe(npzfile):
+    import pandas as pd
+    header_names2= ['Year','Month','Day','Hour','Min','Sec', 'LAT', 
+                   'LON','DEP','EX','EY','AZ','EZ','MAG','ID','UTCDT']
+    allQuakesDF = pd.DataFrame(npzfile['allQuakes'])
+    presentBG= npzfile['presentBG']
+    presentNC = npzfile['presentNC']
+    
+    allQuakesDF.columns = header_names2
+    
+    allQuakesDF['inBG'] = presentBG.astype('bool')
+    allQuakesDF['inNC'] = presentNC.astype('bool')
+    
+    
+    allStations = pd.read_csv('allStationsOnly.txt',sep = '\s+')
+
+    return allQuakesDF, allStations

@@ -9,6 +9,11 @@ from saveMSEEDEventID_functions import ReadFilterEQandStations,DrawMapEvents
 pd.set_option('mode.chained_assignment','warn')
 from obspy.fdsn import Client
 from matplotlib import cm
+from plotly.plotly import plot
+import plotly.graph_objs as go
+import plotly.tools as tls 
+tls.set_credentials_file(username='Anton.Biryukov', api_key='q0iwsvqelb')
+
 
 def ndToDataframe(npzfile):
     import pandas as pd
@@ -50,12 +55,22 @@ subset_stations = allStations.ix[
                                 (allStations['LON']>leftcornerbot[0]) & (allStations['LON']<rightcornerup[0]) &
                                 (allStations['Network_Code'].isin(['NC','BG']))
                                 ]
-
-ideq = 71701935
-
-NCst = obspy.read('./events/NCevent_%d.mseed' % ideq)
-BGst = obspy.read('./events/BGevent_%d.mseed' % ideq)
-event_record = allQuakes[allQuakes.ID == ideq]
+subset_stations.index = range(subset_stations.shape[0])
+counts = np.zeros(subset_stations.shape[0])
+for indSta,rowSta in subset_stations.iterrows():
+    count=0
+    print 'Counting events on %s.%s' % (rowSta['Network_Code'],rowSta['Station_Code'])
+    for index, row in allQuakes.iterrows():
+        ideq = row['ID']
+        #NCst = obspy.read('./events/NCevent_%d.mseed' % ideq).select(station = rowSta)
+        BGst = obspy.read('./events/BGevent_%d.mseed' % ideq).select(station=rowSta['Station_Code']).count()
+        count+=BGst
+        #print '%3.2f' % (1.0*index/(allQuakes.shape[0]))
+    counts[indSta] = count
+    
+subset_stations['NEvents'] = counts
+subset_stations.to_csv('./subsetStations.csv')
+    
 #QMLst = obspy.read('./events/QML_event_%d.mseed' % ideq)
     
     
