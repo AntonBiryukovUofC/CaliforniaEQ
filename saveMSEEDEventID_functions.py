@@ -174,4 +174,9 @@ def ExtractDataFromSeedID(ideq,sta_triplet = ['ACR','SB4','FUM']):
     traces = (STA1_tr.data,STA2_tr.data,STA3_tr.data)
     
     row = np.hstack(traces)
+
+    if (abs(STA1_tr.stats.starttime-STA2_tr.stats.starttime) >0.1) | (abs(STA1_tr.stats.starttime-STA3_tr.stats.starttime) >0.1):
+        print 'Time of reference is shifted too far!!!!'
+        return None
+    
     return row
