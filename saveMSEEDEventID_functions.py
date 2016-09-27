@@ -101,7 +101,7 @@ def DrawMapEvents(allQuakes,allStations ,
     m.drawstates()
     m.drawparallels(lat_eq,labels = [1,1,1,1])
     m.drawmeridians(lon_eq,labels = [1,1,1,1])
-    m.scatter(allQuakes.LON,allQuakes.LAT,30,color=allQuakes.Color,marker='o',alpha=opacity,zorder=10)
+    m.scatter(allQuakes.LON,allQuakes.LAT,30,color='r',marker='o',alpha=opacity,zorder=10)
     
     # Filter out the stations:
     allStations = allStations[(allStations.LAT>38.78) & (allStations.LAT<38.84) &
