@@ -1,39 +1,46 @@
 import pandas as pd
 import obspy
-from saveMSEEDEventID_functions import DrawMapEvents
+import numpy as np
+from saveMSEEDEventID_functions import DrawMapEvents,ExtractDataFromSeedID
+
+
+
 allQuakesSubset = pd.read_csv('./quakesOn3Sta.csv')
 allStations = pd.read_csv('allStationsOnly.txt',sep = '\s+')
 #plot1 = DrawMapEvents(allQuakesSubset,allStations)
-sta_triplet = ['ACR','SB4','JKR']
-index = 1000
-ideq = allQuakesSubset.ix[index].ID
+sta_triplet = ['ACR','SB4','FUM']
 
-freqmin=5
-freqmax=30
+# Do for one index :
+CSVObservations = []
+LatLonDep = []
+allQuakesSubset.index = range(allQuakesSubset.shape[0])
+for index,row in allQuakesSubset.iterrows():
+    ideq = row.ID
+    BGst = obspy.read('./events/BGevent_%d.mseed' % ideq)
 
-BGst = obspy.read('./events/BGevent_%d.mseed' % ideq)
-STA1_tr = BGst.select(station=sta_triplet[0]).filter(type='bandpass',
-                                                freqmin=freqmin,
-                                                freqmax=freqmax)[0]
-STA1_tr.trim(starttime = STA1_tr.stats.starttime,
-             endtime = STA1_tr.stats.starttime+3.2)
-STA1_tr.resample(sampling_rate = 100).normalize().taper(type ='hann',
-                                                        max_percentage=0.5)
+    rowInCsv = ExtractDataFromSeedID(ideq,sta_triplet=sta_triplet)
+    if rowInCsv == None:
+        print 'The event is missing - the record is too short ' 
+    else:
+        CSVObservations.append(rowInCsv)
+        LatLonDep.append([row.LAT,row.LON,row.DEP])
+    print 'Processing row %d , done %3.2f percent' % (index,100.0*index/allQuakesSubset.shape[0])
 
-STA2_tr = BGst.select(station=sta_triplet[1]).filter(type='bandpass',
-                                                freqmin=freqmin,
-                                                freqmax=freqmax)[0]
-STA2_tr.trim(starttime = STA1_tr.stats.starttime,
-             endtime = STA1_tr.stats.starttime+3.2)
-STA2_tr.resample(sampling_rate = 100).normalize().taper(type ='hann',
-                                                        max_percentage=0.5)
+print 'Saving CSV with Observations'
+Obs = np.zeros((len(CSVObservations),960))
+for i,item in enumerate(CSVObservations):
+    Obs[i,:] = item
+
+CSVObsDF = pd.DataFrame(data = Obs[0:,0:],columns = range(960))
+CSVObsDF.to_csv('ObservationsTriplet.csv')
+
+LatLonDepArray  =np.array(LatLonDep)
+print 'Saving CSV with Labels'
+
+LabelsDF = pd.DataFrame({'LAT':LatLonDepArray[:,0],'LON':LatLonDepArray[:,1],'DEP':LatLonDepArray[:,2]})
+LabelsDF.to_csv('LabelsTriplet.csv')
 
 
-STA3_tr = BGst.select(station=sta_triplet[2]).filter(type='bandpass',
-                                                freqmin=freqmin,
-                                                freqmax=freqmax)[0]
-STA3_tr.trim(starttime = STA1_tr.stats.starttime,
-             endtime = STA1_tr.stats.starttime+3.2)
-STA3_tr.resample(sampling_rate = 100).normalize().taper(type ='hann',
-                                                        max_percentage=0.5)
+
+
 

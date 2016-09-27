@@ -42,15 +42,12 @@ allQuakes,allStations = ndToDataframe(npzfile)
 
 allQuakes = allQuakes.ix[allQuakes['inBG'] & allQuakes['inNC'] ,:]
 
-errors = allQuakes.EY
-values,bins = np.histogram(errors,bins=100,density=True)
-bins_points = (bins[:-1]+bins[1:])/2.0
-pmf = integrate.cumtrapz(values, bins_points, initial=0)
+
 #plt.plot(bins_points,pmf)
 leftcornerbot =[-122.836,38.78-0.0001]
 rightcornerup = [-122.732,38.84+0.0001]
 #sta_triplet = ['ACR','SB4','AL4']
-sta_triplet = ['ACR','SB4','JKR']
+sta_triplet = ['ACR','SB4','FUM']
 
 subset_stations = allStations.ix[
                                 (allStations['LAT']>leftcornerbot[1]) & (allStations['LAT']<rightcornerup[1]) &

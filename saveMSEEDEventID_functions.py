@@ -131,3 +131,47 @@ def ndToDataframe(npzfile):
     allStations = pd.read_csv('allStationsOnly.txt',sep = '\s+')
 
     return allQuakesDF, allStations
+def ExtractDataFromSeedID(ideq,sta_triplet = ['ACR','SB4','FUM']):
+    import obspy
+    import numpy as np
+    
+    freqmin=5
+    freqmax=30
+    # Filter / trim the signals here:
+    BGst = obspy.read('./events/BGevent_%d.mseed' % ideq)
+    STA1_tr = BGst.select(station=sta_triplet[0]).filter(type='bandpass',
+                                                    freqmin=freqmin,
+                                                    freqmax=freqmax)[0]
+    if STA1_tr.stats.npts * STA1_tr.stats.delta < 3.2:
+        return None
+    STA1_tr.trim(starttime = STA1_tr.stats.starttime,
+                 endtime = STA1_tr.stats.starttime+3.2)
+    STA1_tr.resample(sampling_rate = 100).normalize().taper(type ='hann',
+                                                            max_percentage=0.5)
+    
+    STA2_tr = BGst.select(station=sta_triplet[1]).filter(type='bandpass',
+                                                    freqmin=freqmin,
+                                                    freqmax=freqmax)[0]
+    if STA2_tr.stats.npts * STA2_tr.stats.delta < 3.2:
+        return None
+    
+    STA2_tr.trim(starttime = STA2_tr.stats.starttime,
+                 endtime = STA2_tr.stats.starttime+3.2)
+    STA2_tr.resample(sampling_rate = 100).normalize().taper(type ='hann',
+                                                            max_percentage=0.5)
+    
+    
+    STA3_tr = BGst.select(station=sta_triplet[2]).filter(type='bandpass',
+                                                    freqmin=freqmin,
+                                                    freqmax=freqmax)[0]
+    if STA3_tr.stats.npts * STA3_tr.stats.delta < 3.2:
+        return None
+    
+    STA3_tr.trim(starttime = STA3_tr.stats.starttime,
+                 endtime = STA3_tr.stats.starttime+3.2)
+    STA3_tr.resample(sampling_rate = 100).normalize().taper(type ='hann',
+                                                            max_percentage=0.5)
+    traces = (STA1_tr.data,STA2_tr.data,STA3_tr.data)
+    
+    row = np.hstack(traces)
+    return row
